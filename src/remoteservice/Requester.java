@@ -28,7 +28,7 @@ public class Requester implements ThreadPoolTask {
             }
             return;
         }
-        if (s5.getHost() == null) {
+        if (s5.getHost() == null || s5.getPort() == 0) {
             try {
                 local.close();
             } catch (IOException ex) {
@@ -37,7 +37,7 @@ public class Requester implements ThreadPoolTask {
             return;
         }
         
-        System.err.println(s5.getHost() +":"+ s5.getPort() +"\tConnecting...");
+        System.err.println("Connecting... "+ s5.getHost() +":"+ s5.getPort());
         
         try {
             target = new Socket(s5.getHost(), s5.getPort());

@@ -10,7 +10,7 @@ public class Socks5 {
     
     private final Socket local;
     private String host = null;
-    private int port = 80;
+    private int port = 0;
     
     public Socks5(Socket s) {
         local = s;

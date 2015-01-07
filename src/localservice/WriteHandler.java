@@ -7,12 +7,13 @@ import java.io.OutputStream;
 import java.net.Socket;
 import threadpool.ThreadPoolTask;
 import utils.Pack;
+import yproxy.Config;
 
 public class WriteHandler implements ThreadPoolTask, Closeable {
     
     private final Socket browser;
     private final Socket remote;
-    private final byte[] buffer = new byte[1024];
+    private final byte[] buffer = new byte[Config.local_write_buffer];
     
     public WriteHandler(Socket s1, Socket s2) {
         browser = s1;

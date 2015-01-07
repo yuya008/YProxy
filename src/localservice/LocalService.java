@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import threadpool.ThreadPool;
+import yproxy.Config;
 
 public class LocalService {
     
@@ -15,7 +16,7 @@ public class LocalService {
     public LocalService() {
         try {
             server = new ServerSocket();
-            server.bind(new InetSocketAddress("127.0.0.1", 11400));
+            server.bind(new InetSocketAddress(Config.local_hostname, Config.local_port));
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -33,8 +34,9 @@ public class LocalService {
         }
     }
     
-    public static void main(String[] args) {
-        new LocalService().start();
-        
-    }
+//    unit test
+//    public static void main(String[] args) {
+//        new LocalService().start();
+//    }
+    
 }

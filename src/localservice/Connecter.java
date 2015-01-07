@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import threadpool.ThreadPool;
 import threadpool.ThreadPoolTask;
+import yproxy.Config;
 
 public class Connecter implements ThreadPoolTask {
     
@@ -21,7 +22,7 @@ public class Connecter implements ThreadPoolTask {
     public void run() {
         remote = new Socket();
         try {
-            remote.connect(new InetSocketAddress("127.0.0.1", 5500));
+            remote.connect(new InetSocketAddress(Config.remote_hostname, Config.remote_port));
         } catch (IOException ex) {
             ex.printStackTrace();
         }
