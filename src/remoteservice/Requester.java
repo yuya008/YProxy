@@ -36,7 +36,9 @@ public class Requester implements ThreadPoolTask {
             }
             return;
         }
-
+        
+        System.err.println(s5.getHost() +":"+ s5.getPort() +"\tConnecting...");
+        
         try {
             target = new Socket(s5.getHost(), s5.getPort());
         } catch (IOException ex) {
