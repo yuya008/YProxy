@@ -15,7 +15,7 @@
 * 首先你必须安装java的运行环境(1.7或以上)，因为这是用java开发的
 
 ```
-#java -jar YProxy.jar localservice --hostname X.X.X.X --port 11400       #本地服务启动
-#java -jar YProxy.jar remoteservice --hostname X.X.X.X --port 11400      #远程服务启动
-#java -jar YProxy.jar --help                                             #帮助
+#java -jar YProxy.jar localservice --localhostname X.X.X.X --localport 11400 --remotehostname X.X.X.X --remoteport 5500 #本地服务启动
+#java -jar YProxy.jar remoteservice --remotehostname X.X.X.X --remoteport 5500                                          #远程服务启动
+#java -jar YProxy.jar --help                                             												#帮助
 ```
