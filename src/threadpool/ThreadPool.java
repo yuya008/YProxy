@@ -4,7 +4,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class ThreadPool {
     
-    private LinkedBlockingQueue<ThreadPoolTask> taskQueue = new LinkedBlockingQueue();
+    private final LinkedBlockingQueue<ThreadPoolTask> taskQueue = new LinkedBlockingQueue();
     
     public ThreadPool() {
         createThread();
