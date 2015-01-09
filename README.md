@@ -19,5 +19,5 @@
 ```
 #java -jar YProxy.jar localservice --localhostname 127.0.0.1 --localport 11400 --remotehostname 你的vps的ip --remoteport 启动在vps的remoteService的端口号 #本地服务启动
 #java -jar YProxy.jar remoteservice --remotehostname vps的ip --remoteport remoteService监听的端口号  #远程服务启动
-#java -jar YProxy.jar --help                                             												#帮助
+#java -jar YProxy.jar --help  #帮助
 ```
