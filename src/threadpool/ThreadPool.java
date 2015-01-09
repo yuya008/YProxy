@@ -1,6 +1,7 @@
 package threadpool;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import yproxy.Config;
 
 public class ThreadPool {
     
@@ -11,7 +12,7 @@ public class ThreadPool {
     }
     
     private void createThread() {
-        for (int i = 0; i < 1024; i++) {
+        for (int i = 0; i < Config.threadsn; i++) {
             new Thread(new ThreadManager(this)).start();
         }
     }

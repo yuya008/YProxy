@@ -12,4 +12,7 @@ public class Config {
     
     public static int remote_read_buffer = 1024;
     public static int remote_write_buffer = 1024;
+    
+    public static int threadsn = 1024;
+    
 }

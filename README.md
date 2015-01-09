@@ -13,9 +13,12 @@
 ##YProxy怎么用?
 
 * 首先你必须安装java的运行环境(1.7或以上)，因为这是用java开发的
+* 你必须要有自己的国外服务器，然后localservice是部署在本机的，remotehostname放在你的国外服务器上
+* 两个服务要进行通信，localservice要监听自己的端口地址，还要制定remoteservice的地址端口
+* 比如像下面这样运行服务，可以设定浏览器走socks5协议走127.0.0.1和11400端口，代理翻墙即可
 
 ```
-#java -jar YProxy.jar localservice --localhostname X.X.X.X --localport 11400 --remotehostname X.X.X.X --remoteport 5500 #本地服务启动
-#java -jar YProxy.jar remoteservice --remotehostname X.X.X.X --remoteport 5500                                          #远程服务启动
-#java -jar YProxy.jar --help                                             												#帮助
+#java -jar YProxy.jar localservice --localhostname 127.0.0.1 --localport 11400 --remotehostname 192.228.105.18 --remoteport 5500 #本地服务启动
+#java -jar YProxy.jar remoteservice --remotehostname 192.228.105.18 --remoteport 5500                                            #远程服务启动
+#java -jar YProxy.jar --help                                             												         #帮助信息
 ```

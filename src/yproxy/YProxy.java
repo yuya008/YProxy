@@ -15,6 +15,7 @@ public class YProxy {
         System.err.println(" --remoteport      启动服务监听的端口，默认5500");
         System.err.println(" --readbuffersize  服务IO读缓冲字节大小，默认1024byte");
         System.err.println(" --writebuffersize 服务IO写缓冲字节大小，默认1024byte");
+        System.err.println(" --threadsn        分配给线程池的线程数，默认1024");
         System.err.println(" --help            帮助信息");
         System.exit(1);
     }
@@ -50,6 +51,9 @@ public class YProxy {
                     } else {
                         Config.remote_write_buffer = Integer.parseInt(args[++i]);
                     }
+                    break;
+                case "--threadsn":
+                    Config.threadsn = Integer.parseInt(args[++i]);
                     break;
                 default:
                     usage();
