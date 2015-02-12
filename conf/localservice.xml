@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<localservice>
+	<!-- 本地服务主机名 -->
+    <hostname>127.0.0.1</hostname>
+    <!-- 本地服务端口号 -->
+    <port>11400</port>
+    <!-- 读缓冲区大小 -->
+    <read-buffer-size>1024</read-buffer-size>
+    <!-- 写缓冲区大小 -->
+    <write-buffer-size>1024</write-buffer-size>
+    <!-- 线程池线程数 -->
+    <thread-pool-threads>1024</thread-pool-threads>
+</localservice>
