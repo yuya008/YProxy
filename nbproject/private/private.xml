@@ -2,6 +2,13 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/home/yuya/NetBeansProjects/YProxy/src/localservice/Connecter.java</file>
+            <file>file:/home/yuya/NetBeansProjects/YProxy/src/config/Config.java</file>
+            <file>file:/home/yuya/NetBeansProjects/YProxy/src/localservice/LocalService.java</file>
+            <file>file:/home/yuya/NetBeansProjects/YProxy/src/localservice/ReadHandler.java</file>
+            <file>file:/home/yuya/NetBeansProjects/YProxy/src/localservice/WriteHandler.java</file>
+            <file>file:/home/yuya/NetBeansProjects/YProxy/src/yproxy/YProxy.java</file>
+        </group>
     </open-files>
 </project-private>

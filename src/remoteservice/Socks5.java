@@ -4,59 +4,60 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import utils.Pack;
 
 public class Socks5 {
     
-    private final Socket local;
+    private final AsynchronousSocketChannel local;
     private String host = null;
     private int port = 0;
     
-    public Socks5(Socket s) {
+    public Socks5(AsynchronousSocketChannel s) {
         local = s;
     }
     
     public boolean parseAndEmit() {
-        InputStream in = null;
-        OutputStream out = null;
+        // step 1
+        byte[] b = new byte[3];
+        ByteBuffer buf = ByteBuffer.allocate(3);
         try {
-            in = local.getInputStream();
-            out = local.getOutputStream();
-        } catch (IOException ex) {
-            return false;
-        }
-        
-        try {
-            byte[] b = new byte[3];
-            int n = in.read(b);
+            Integer n = local.read(buf).get();
             
             if (n != 3)
                 return false;
-
-            // step 1
+            
+            buf.flip();
+            buf.get(b, 0, 3);
             Pack.unpack(b);
             
             if (b[0] != 0x05 || b[1] != 0x01 || b[2] != 0x00)
                 return false;
-
-        } catch (IOException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             return false;
         }
         
+        // step 2
+        byte[] say = new byte[]{0x05, 0x00};
+        Pack.pack(say);
+        Future<Integer> future = local.write(ByteBuffer.wrap(say, 0, 2));
         try {
-            // step 2
-            byte[] say = new byte[]{0x05, 0x00};
-            Pack.pack(say);
-            out.write(say);
-        } catch (IOException ex) {
+            future.get();
+        } catch (InterruptedException | ExecutionException ex) {
             return false;
         }
+        if (!future.isDone())
+            return false;
         
-        byte[] bport = null, b = null;
-        int n = -1;
-        
+        // step 3
         try {
-            // step 3
+            byte[] bport = null, b = null;
+            int n = -1;
             if (Pack.unpack(in.read()) != 0x05 || Pack.unpack(in.read()) != 0x01 || Pack.unpack(in.read()) != 0x00)
                 return false;
                 

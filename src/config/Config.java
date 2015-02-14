@@ -13,18 +13,16 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-public class Config {
+public class Config extends ConfigConstant {
     
     private String[] args;
-    private static final Properties config;
+    private final Properties config;
     private String whatService;
     
-    static {
-        config = new Properties(System.getProperties());
-    }
-
     public Config(String[] args) {
         this.args = args;
+        config = new Properties(System.getProperties());
+        parse();
     }
     
     private void usage() {
@@ -42,18 +40,20 @@ public class Config {
         System.exit(1);
     }
     
-    public void parse() {
+    private void parse() {
         if (args == null)
             usage();
         if (args.length < 1)
             usage();
-        if (!args[0].equals("localservice"))
-            if (!args[0].equals("remoteservice"))
-                usage();
+        if (args[0].equals("localservice"))
+            whatService = "localservice";
+        else if (args[0].equals("remoteservice"))
+            whatService = "remoteservice";
+        else
+            usage();
         
         advanceParse();
-        String[] s = new String[]{"localservice", "remoteservice"};
-        for (String server : s)
+        for (String server : Config.servicenamearr)
             parseServiceXML(server);
         parseArgs();
     }
@@ -64,44 +64,41 @@ public class Config {
         if (userDirStr == null)
             panic("Property user.dir is null");
         
-        config.setProperty("yproxy.user.dir", userDirStr);
+        config.setProperty(Config.UserDir, userDirStr);
         String baseDir = Paths.get(userDirStr+"/../").normalize().toAbsolutePath().toString();
-        config.setProperty("yproxy.user.basedir", baseDir);
-        
-        if (args[0].equals("localservice"))
-            whatService = "localservice";
-        else
-            whatService = "remoteservice";
+        config.setProperty(Config.BaseDir, baseDir);
+        String confDir = Paths.get(userDirStr+"/../conf").normalize().toAbsolutePath().toString();
+        config.setProperty(Config.ConfDir, confDir);
     }
     
-    public static String getConfig(String key) {
-        return config.getProperty(key);
+    public String getConfig(String key, String defaultv) {
+        return config.getProperty(key, defaultv);
     }
     
     private void parseServiceXML(String service) {
-        
-        String baseDir = Config.getConfig("yproxy.user.basedir");
-        Path confpath = Paths.get(baseDir, "conf");
+        Path confpath = Paths.get(config.getProperty(Config.ConfDir));
         
         if (!Files.isDirectory(confpath) || !Files.isReadable(confpath))
             panic("conf/ dir not found or not readable");
         
-        Path configFile;
         String newkey = "yproxy."+service+".";
-        configFile = Paths.get(confpath.toString(), service+".xml");
-        if (!Files.isRegularFile(configFile, LinkOption.NOFOLLOW_LINKS) ||
-            !Files.isReadable(configFile)) {
+        Path configFile = Paths.get(confpath.toString(), service+".xml");
+        
+        if (!Files.isRegularFile(configFile) || !Files.isReadable(configFile))
             panic(service+".xml file not found or not readable or is a symlink");
-        }
+        
         XMLStreamReader xsr = null;
         try {
             try (InputStream u = Files.newInputStream(configFile, StandardOpenOption.READ)) {
                 XMLInputFactory xif = XMLInputFactory.newFactory();
                 xsr = xif.createXMLStreamReader(u);
-                for (;xsr.hasNext();) {
-                    if (xsr.next() == XMLStreamReader.START_ELEMENT) {
+                for (;xsr.hasNext();)
+                {
+                    if (xsr.next() == XMLStreamReader.START_ELEMENT)
+                    {
                         String ename = xsr.getName().toString();
-                        if (xsr.next() == XMLStreamReader.CHARACTERS) {
+                        if (xsr.next() == XMLStreamReader.CHARACTERS)
+                        {
                             if (xsr.isWhiteSpace()) continue;
                             String evalue = xsr.getText().trim();
                             config.setProperty(newkey+ename, evalue);
@@ -131,16 +128,16 @@ public class Config {
             for (int i = 1; i < args.length; i++) {
                 switch (args[i]) {
                     case "--localhostname":
-                        config.setProperty("yproxy.localservice.hostname", args[++i]);
+                        config.setProperty(Config.Localhost, args[++i]);
                         break;
                     case "--localport":
-                        config.setProperty("yproxy.localservice.port", args[++i]);
+                        config.setProperty(Config.Localport, args[++i]);
                         break;
                     case "--remotehostname":
-                        config.setProperty("yproxy.remoteservice.hostname", args[++i]);
+                        config.setProperty(Config.Localhost, args[++i]);
                         break;
                     case "--remoteport":
-                        config.setProperty("yproxy.remoteservice.port", args[++i]);
+                        config.setProperty(Config.Localport, args[++i]);
                         break;
                     case "--readbuffersize":
                         config.setProperty("yproxy."+whatService+".read-buffer-size", args[++i]);
@@ -159,7 +156,14 @@ public class Config {
         } catch (NumberFormatException | ArrayIndexOutOfBoundsException ex) {
             usage();
         }
-        
     }
-
+    
+    // test
+    public Properties getConfig() {
+        return config;
+    }
+    
+    public String whatService() {
+        return whatService;
+    }
 }

@@ -14,8 +14,7 @@ public class Configtest {
 //        String[] args = {"localservice"};
         
         Config c = new Config(args);
-        c.parse();
-        Properties p = Config.getConfig();
+        Properties p = c.getConfig();
         
         for (Object key: p.keySet()) {
             System.out.println(key +":"+ p.get(key));

@@ -1,37 +1,52 @@
 package remoteservice;
 
+import config.Config;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import threadpool.ThreadPool;
-import yproxy.Config;
+import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.concurrent.Executors;
+import yproxy.Service;
 
-public class RemoteService {
+public class RemoteService implements Service {
     
-    private final ThreadPool tp = new ThreadPool();
-    private ServerSocket server;
-    private Socket local;
+    private Config config;
+    private AsynchronousChannelGroup cgroup;
+    private AsynchronousServerSocketChannel ass;
     
-    public RemoteService() {
+    public RemoteService(Config c) {
+        config = c;
+        
+        String hostname = config.getConfig(Config.Remotehost, "127.0.0.1");
+        int tsn = Integer.parseInt(config.getConfig(Config.Remotethreads, "1024"));
+        int port = Integer.parseInt(config.getConfig(Config.Remoteport, "11400"));
+        
         try {
-            server = new ServerSocket();
-            server.bind(new InetSocketAddress(Config.remote_hostname, Config.remote_port));
+            cgroup = AsynchronousChannelGroup.withFixedThreadPool(tsn, Executors.defaultThreadFactory());
+            ass = AsynchronousServerSocketChannel.open(cgroup);
+            ass.bind(new InetSocketAddress(hostname, port));
         } catch (IOException ex) {
             ex.printStackTrace();
+            System.exit(1);
         }
     }
     
+    @Override
     public void start() {
-        for (;;) {
-            try {
-                local = server.accept();
-            } catch (IOException ex) {
-                ex.printStackTrace();
+        ass.accept(null, new CompletionHandler<AsynchronousSocketChannel,Object>(){
+
+            @Override
+            public void completed(AsynchronousSocketChannel local, Object attachment) {
+                Socks5 socks = new Socks5(local);
             }
-            Requester conn = new Requester(local, tp);
-            tp.putTask(conn);
-        }
+
+            @Override
+            public void failed(Throwable exc, Object attachment) {
+                exc.printStackTrace();
+            }
+        });
     }
     
 //    unit test

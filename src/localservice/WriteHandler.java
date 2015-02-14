@@ -1,75 +1,63 @@
 package localservice;
 
-import java.io.Closeable;
+import config.Config;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import threadpool.ThreadPoolTask;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 import utils.Pack;
-import yproxy.Config;
 
-public class WriteHandler implements ThreadPoolTask, Closeable {
+public class WriteHandler {
     
-    private final Socket browser;
+    private final Connecter connecter;
+    private final Config config;
+    private final byte[] bytebuffer;
+    private final ByteBuffer buffer;
+    private final AsynchronousSocketChannel channel;
     private final Socket remote;
-    private final byte[] buffer = new byte[Config.local_write_buffer];
-    
-    public WriteHandler(Socket s1, Socket s2) {
-        browser = s1;
-        remote = s2;
-    }
-    
-    @Override
-    public void run() {
-        InputStream in = null;
-        try {
-            in = remote.getInputStream();
-        } catch (IOException ex) {
-            close();
-            return;
-        }
-        
-        OutputStream out = null;
-        try {
-            out = browser.getOutputStream();
-        } catch (IOException ex) {
-            close();
-            return;
-        }
-        int n = -1;
-        for (;;) {
-            
-            try {
-                n = in.read(buffer);
-            } catch (IOException ex) {
-                close();
-                break;
-            }
-            
-            if (n == -1) {
-                close();
-                break;
-            }
-            
-            try {
-                Pack.unpack(buffer, n);
-                out.write(buffer, 0, n);
-            } catch (IOException ex) {
-                close();
-                break;
-            }
-        }
-    }
 
-    @Override
-    public void close() {
-        try {
-            browser.close();
-            remote.close();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+    public WriteHandler(Connecter c, Config conf) {
+        connecter = c;
+        config = conf;
+        
+        int writeBufferSize = Integer.parseInt(config.getConfig(Config.LocalWBsize, "1024"));
+        
+        buffer = ByteBuffer.allocate(writeBufferSize);
+        bytebuffer = new byte[writeBufferSize];
+        channel = connecter.getBrowser();
+        remote = connecter.getRemoteSocket();
     }
     
+    public void process() {
+        try {
+            InputStream is = remote.getInputStream();
+            int readn = -1;
+            for (;;) {
+                readn = is.read(bytebuffer);
+                if (readn == -1) {
+                    connecter.close();
+                    return;
+                }
+                Pack.unpack(bytebuffer, readn);
+                channel.write(ByteBuffer.wrap(bytebuffer, 0, readn), null, new CompletionHandler<Integer,Object>(){
+
+                    @Override
+                    public void completed(Integer result, Object attachment) {
+                    }
+
+                    @Override
+                    public void failed(Throwable exc, Object attachment) {
+                        connecter.close();
+                        return;
+                    }
+                    
+                });
+            }
+            
+        } catch (IOException ex) {
+            connecter.close();
+        }
+    }
 }
