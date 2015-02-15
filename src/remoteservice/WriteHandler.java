@@ -1,75 +1,67 @@
 package remoteservice;
 
-import java.io.Closeable;
+import config.Config;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import threadpool.ThreadPoolTask;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 import utils.Pack;
-import yproxy.Config;
 
-public class WriteHandler implements ThreadPoolTask, Closeable {
+
+public class WriteHandler {
+    private final Config config;
+    private final ByteBuffer buffer;
+    private final byte[] bytebuffer;
+    private final AsynchronousSocketChannel channel;
+    private final Socket remote;
     
-    private final Socket local;
-    private final Socket target;
-    private final byte[] buffer = new byte[Config.remote_write_buffer];
-    
-    public WriteHandler(Socket s1, Socket s2) {
-        local = s1;
-        target = s2;
-    }
-    
-    @Override
-    public void run() {
-        InputStream in = null;
-        try {
-            in = target.getInputStream();
-        } catch (IOException ex) {
-            close();
-            return;
-        }
+    public WriteHandler(AsynchronousSocketChannel c, Socket r, Config conf) {
+        channel = c;
+        config = conf;
         
-        OutputStream out = null;
+        int readBufferSize = Integer.parseInt(config.getConfig(Config.RemoteWBsize, "1024"));
+        
+        buffer = ByteBuffer.allocate(readBufferSize);
+        bytebuffer = new byte[readBufferSize];
+        remote = r;
+    }
+    
+    public void process() {
         try {
-            out = local.getOutputStream();
+            InputStream is = remote.getInputStream();
+            int readn = -1;
+            readn = is.read(bytebuffer);
+            if (readn == -1) {
+                close();
+                return;
+            }
+            Pack.pack(bytebuffer, readn);
+            channel.write(ByteBuffer.wrap(bytebuffer, 0, readn), null, new CompletionHandler<Integer,Object>(){
+
+                @Override
+                public void completed(Integer result, Object attachment) {
+                    process();
+                }
+
+                @Override
+                public void failed(Throwable exc, Object attachment) {
+                    close();
+                    return;
+                }
+                    
+            });       
         } catch (IOException ex) {
             close();
-            return;
-        }
-        int n = -1;
-        for (;;) {
-            
-            try {
-                n = in.read(buffer);
-            } catch (IOException ex) {
-                close();
-                break;
-            }
-            
-            if (n == -1) {
-                close();
-                break;
-            }
-            
-            try {
-                Pack.pack(buffer, n);
-                out.write(buffer, 0, n);
-            } catch (IOException ex) {
-                close();
-                break;
-            }
         }
     }
-
-    @Override
+    
     public void close() {
         try {
-            local.close();
-            target.close();
+            remote.close();
+            channel.close();
         } catch (IOException ex) {
-            ex.printStackTrace();
         }
     }
-    
 }

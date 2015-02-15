@@ -10,5 +10,5 @@
     <!-- 写缓冲区大小 -->
     <write-buffer-size>1024</write-buffer-size>
     <!-- 线程池线程数 -->
-    <thread-pool-threads>8</thread-pool-threads>
+    <thread-pool-threads>1024</thread-pool-threads>
 </remoteservice>

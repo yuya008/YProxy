@@ -24,19 +24,14 @@ public class Socks5 {
     
     public boolean parseAndEmit() {
         // step 1
-        byte[] b = new byte[3];
-        ByteBuffer buf = ByteBuffer.allocate(3);
         try {
+            ByteBuffer buf = ByteBuffer.allocate(3);
             Integer n = local.read(buf).get();
-            
             if (n != 3)
                 return false;
-            
+            Pack.unpack(buf, n);
             buf.flip();
-            buf.get(b, 0, 3);
-            Pack.unpack(b);
-            
-            if (b[0] != 0x05 || b[1] != 0x01 || b[2] != 0x00)
+            if (buf.get() != 0x05 || buf.get() != 0x01 || buf.get() != 0x00)
                 return false;
         } catch (InterruptedException | ExecutionException ex) {
             return false;
@@ -53,57 +48,84 @@ public class Socks5 {
         }
         if (!future.isDone())
             return false;
-        
+
         // step 3
         try {
-            byte[] bport = null, b = null;
-            int n = -1;
-            if (Pack.unpack(in.read()) != 0x05 || Pack.unpack(in.read()) != 0x01 || Pack.unpack(in.read()) != 0x00)
+            ByteBuffer buf = ByteBuffer.allocate(3);
+
+            Integer n = local.read(buf).get();
+
+            if (n != 3)
                 return false;
-                
-            int type = Pack.unpack(in.read());
+            
+            Pack.unpack(buf, n);
+            buf.flip();
+            if (buf.get() != 0x05 || buf.get() != 0x01 || buf.get() != 0x00)
+                return false;
+            
+            ByteBuffer typebuf = ByteBuffer.allocate(1);
+            Integer typesize = local.read(typebuf).get();
+            
+            if (typesize <= 0)
+                return false;
+            typebuf.flip();
+            int type = Pack.unpack(typebuf.get());
             
             if (type == 0x03) {
-                int hostlen = in.read();
+                ByteBuffer hostlenbuffer = ByteBuffer.allocate(1);
+                Integer hostlensize = local.read(hostlenbuffer).get();
                 
-                if (hostlen == -1)
-                    return false;
+                if (hostlensize <= 0) return false;
                 
-                hostlen = Pack.unpack(hostlen);
-                b = new byte[1024];
-                n = in.read(b);
+                Pack.unpack(hostlenbuffer, hostlensize);
+                hostlenbuffer.flip();
+                int hostlen = (((int)hostlenbuffer.get()) & 0xff);
+                ByteBuffer hostbuffer = ByteBuffer.allocate(hostlen);
+                Integer hostsize = local.read(hostbuffer).get();
                 
-                Pack.unpack(b, n);
+                if (hostsize <= 0) return false;
                 
-                this.host = new String(b, 0, hostlen);
-                bport = new byte[]{b[n-2], b[n-1]};
-                this.port = bytes2int(new byte[]{0, 0, bport[0], bport[1]});
+                Pack.unpack(hostbuffer, hostsize);
+                this.host = new String(hostbuffer.array(), 0, hostsize);
+                ByteBuffer portbuffer = ByteBuffer.allocate(2);
+                Integer portlensize = local.read(portbuffer).get();
+                
+                if (portlensize <= 0) return false;
+                
+                Pack.unpack(portbuffer, portlensize);
+                portbuffer.flip();
+                this.port = bytes2int(new byte[]{0, 0, portbuffer.get(), portbuffer.get()});
             } else if (type == 0x01) {
-                this.host = Pack.unpack(in.read())+"."+Pack.unpack(in.read())+"."+Pack.unpack(in.read())+"."+Pack.unpack(in.read());
-                bport = new byte[2];
-                in.read(bport);
-                Pack.unpack(bport);
-                this.port = bytes2int(new byte[]{0, 0, bport[0], bport[1]});
+                ByteBuffer hostbuffer = ByteBuffer.allocate(4);
+                Integer hostsize = local.read(hostbuffer).get();
+                if (hostsize <= 0)
+                    return false;
+                Pack.unpack(hostbuffer, hostsize);
+                hostbuffer.flip();
+                for (int i = 0; i < 3; i++) {
+                    this.host += (((int)hostbuffer.get()) & 0xff) + ".";
+                }
+                this.host += (((int)hostbuffer.get()) & 0xff);
+                
+                ByteBuffer portbuffer = ByteBuffer.allocate(2);
+                Integer portlensize = local.read(portbuffer).get();
+                Pack.unpack(portbuffer, portlensize);
+                portbuffer.flip();
+                this.port = bytes2int(new byte[]{0, 0, portbuffer.get(), portbuffer.get()});
             } else {
                 return false;
             }
-        } catch (IOException | ArrayIndexOutOfBoundsException | StringIndexOutOfBoundsException ex) {
+            
+        } catch (InterruptedException | ExecutionException ex) {
             return false;
         }
-        
         // step 4
-        try {
-            byte[] b1 = new byte[]{5, 0, 0, 1};
-            Pack.pack(b1);
-            out.write(b1);
-            byte[] b2 = new byte[]{0,0,0,0,0,0};
-            Pack.pack(b2);
-            out.write(b2);
-            out.flush();
-        } catch (IOException ex) {
-            return false;
-        }
-        
+        byte[] b1 = new byte[]{5, 0, 0, 1};
+        Pack.pack(b1);
+        local.write(ByteBuffer.wrap(b1));
+        byte[] b2 = new byte[]{0,0,0,0,0,0};
+        Pack.pack(b2);
+        local.write(ByteBuffer.wrap(b2));
         return true;
     }
     

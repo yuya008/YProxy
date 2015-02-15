@@ -1,75 +1,74 @@
 package remoteservice;
 
-import java.io.Closeable;
+import config.Config;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import threadpool.ThreadPoolTask;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 import utils.Pack;
-import yproxy.Config;
 
-public class ReadHandler implements ThreadPoolTask, Closeable {
+public class ReadHandler {
+    private final Config config;
+    private final ByteBuffer buffer;
+    private final byte[] bytebuffer;
+    private final AsynchronousSocketChannel channel;
+    private final Socket remote;
     
-    private final Socket local;
-    private final Socket target;
-    private final byte[] buffer = new byte[Config.remote_read_buffer];
-    
-    public ReadHandler(Socket s1, Socket s2) {
-        local = s1;
-        target = s2;
-    }
-    
-    @Override
-    public void run() {
-        InputStream in = null;
-        try {
-            in = local.getInputStream();
-        } catch (IOException ex) {
-            close();
-            return;
-        }
+    public ReadHandler(AsynchronousSocketChannel c, Socket r, Config conf) {
+        channel = c;
+        config = conf;
         
-        OutputStream out = null;
-        try {
-            out = target.getOutputStream();
-        } catch (IOException ex) {
-            close();
-            return;
-        }
+        int readBufferSize = Integer.parseInt(config.getConfig(Config.RemoteRBsize, "1024"));
         
-        int n = -1;
-        for (;;) {
-            try {
-                n = in.read(buffer);
-            } catch (IOException ex) {
-                close();
-                break;
-            }
-            
-            if (n == -1) {
-                close();
-                break;
-            }
-            
-            try {
-                Pack.unpack(buffer, n);
-                out.write(buffer, 0, n);
-            } catch (IOException ex) {
-                close();
-                break;
-            }
-        }
+        buffer = ByteBuffer.allocate(readBufferSize);
+        bytebuffer = new byte[readBufferSize];
+        remote = r;
     }
 
-    @Override
+    public void process() {
+        
+        channel.read(buffer, null, new CompletionHandler<Integer,Object>(){
+
+            @Override
+            public void completed(Integer size, Object attachment) {
+                buffer.flip();
+                if (size < 0)
+                    return;
+                else if (size == -1) {
+                    close();
+                    return;
+                }
+                
+                try {
+                    buffer.get(bytebuffer, 0, size);
+                    OutputStream os = remote.getOutputStream();
+                    
+                    Pack.unpack(bytebuffer, size);
+                    
+                    os.write(bytebuffer, 0, size);
+                    os.flush();
+                } catch (IOException ex) {
+                    close();
+                    return;
+                }
+                process();
+            }
+
+            @Override
+            public void failed(Throwable exc, Object attachment) {
+                close();
+            }
+            
+        });
+    }
+    
     public void close() {
         try {
-            local.close();
-            target.close();
+            remote.close();
+            channel.close();
         } catch (IOException ex) {
-            ex.printStackTrace();
         }
     }
-    
 }

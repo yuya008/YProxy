@@ -34,27 +34,27 @@ public class WriteHandler {
         try {
             InputStream is = remote.getInputStream();
             int readn = -1;
-            for (;;) {
-                readn = is.read(bytebuffer);
-                if (readn == -1) {
+
+            readn = is.read(bytebuffer);
+            if (readn == -1) {
+                connecter.close();
+                return;
+            }
+            Pack.unpack(bytebuffer, readn);
+            channel.write(ByteBuffer.wrap(bytebuffer, 0, readn), null, new CompletionHandler<Integer,Object>(){
+
+                @Override
+                public void completed(Integer result, Object attachment) {
+                    process();
+                }
+
+                @Override
+                public void failed(Throwable exc, Object attachment) {
                     connecter.close();
                     return;
                 }
-                Pack.unpack(bytebuffer, readn);
-                channel.write(ByteBuffer.wrap(bytebuffer, 0, readn), null, new CompletionHandler<Integer,Object>(){
-
-                    @Override
-                    public void completed(Integer result, Object attachment) {
-                    }
-
-                    @Override
-                    public void failed(Throwable exc, Object attachment) {
-                        connecter.close();
-                        return;
-                    }
                     
-                });
-            }
+            });
             
         } catch (IOException ex) {
             connecter.close();

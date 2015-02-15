@@ -47,10 +47,10 @@ public class ReadHandler {
                 try {
                     buffer.get(bytebuffer, 0, size);
                     OutputStream os = remote.getOutputStream();
-                    
                     Pack.pack(bytebuffer, size);
                     
                     os.write(bytebuffer, 0, size);
+                    os.flush();
                 } catch (IOException ex) {
                     connecter.close();
                     return;
