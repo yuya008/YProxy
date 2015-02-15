@@ -1,1 +1,4 @@
+#netbeans
 /dist/
+#/build/
+#/nbproject/
