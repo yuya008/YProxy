@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -53,7 +52,7 @@ public class Config extends ConfigConstant {
             usage();
         
         advanceParse();
-        for (String server : Config.servicenamearr)
+        for (String server : Config.Servicenamearr)
             parseServiceXML(server);
         parseArgs();
     }

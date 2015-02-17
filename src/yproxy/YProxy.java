@@ -5,12 +5,8 @@ import localservice.LocalService;
 import remoteservice.RemoteService;
 
 public class YProxy {
-    
-    private static Service service;
-    
+
     public static Service createService(Config c) {
-        if (service != null) return service;
-        
         String s = c.whatService();
         if (s.equals("localservice"))
             return new LocalService(c);

@@ -1,28 +1,22 @@
 package remoteservice;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import utils.Pack;
 
 public class Socks5 {
     
     private final AsynchronousSocketChannel local;
-    private String host = null;
-    private int port = 0;
+    private String host = "";
+    private int port;
     
     public Socks5(AsynchronousSocketChannel s) {
         local = s;
     }
     
-    public boolean parseAndEmit() {
+    public boolean parseAndResponse() {
         // step 1
         try {
             ByteBuffer buf = ByteBuffer.allocate(3);
@@ -79,7 +73,7 @@ public class Socks5 {
                 
                 Pack.unpack(hostlenbuffer, hostlensize);
                 hostlenbuffer.flip();
-                int hostlen = (((int)hostlenbuffer.get()) & 0xff);
+                int hostlen = Byte.toUnsignedInt(hostlenbuffer.get());
                 ByteBuffer hostbuffer = ByteBuffer.allocate(hostlen);
                 Integer hostsize = local.read(hostbuffer).get();
                 
@@ -102,10 +96,11 @@ public class Socks5 {
                     return false;
                 Pack.unpack(hostbuffer, hostsize);
                 hostbuffer.flip();
-                for (int i = 0; i < 3; i++) {
-                    this.host += (((int)hostbuffer.get()) & 0xff) + ".";
-                }
-                this.host += (((int)hostbuffer.get()) & 0xff);
+
+                for (int i = 0; i < 3; i++)
+                    this.host += Byte.toUnsignedInt(hostbuffer.get()) + ".";
+                
+                this.host += Byte.toUnsignedInt(hostbuffer.get());
                 
                 ByteBuffer portbuffer = ByteBuffer.allocate(2);
                 Integer portlensize = local.read(portbuffer).get();
@@ -115,7 +110,6 @@ public class Socks5 {
             } else {
                 return false;
             }
-            
         } catch (InterruptedException | ExecutionException ex) {
             return false;
         }
@@ -130,11 +124,11 @@ public class Socks5 {
     }
     
     public String getHost() {
-        return this.host;
+        return host;
     }
     
     public int getPort() {
-        return this.port;
+        return port;
     }
     
     public static int bytes2int(byte[] bytes){  

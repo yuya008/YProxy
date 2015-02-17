@@ -16,5 +16,8 @@ public class ConfigConstant {
     public static final String BaseDir = "yproxy.user.basedir";
     public static final String ConfDir = "yproxy.user.confDir";
     
-    public static final String[] servicenamearr = {"localservice", "remoteservice"};
+    public static final String Localservice = "localservice";
+    public static final String Remoteservice = "remoteservice";
+    
+    public static final String[] Servicenamearr = {Localservice, Remoteservice};
 }

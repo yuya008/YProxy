@@ -4,13 +4,14 @@ import config.Config;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import utils.Pack;
+import yproxy.IoProcess;
 import yproxy.Service;
 
 public class RemoteService implements Service {
@@ -43,9 +44,10 @@ public class RemoteService implements Service {
             @Override
             public void completed(AsynchronousSocketChannel local, Object attachment) {
                 ass.accept(null, this);
+                
                 Socks5 socks = new Socks5(local);
-                if (socks.parseAndEmit()) {
-                    if (socks.getHost() == null || socks.getPort() == 0) {
+                if (socks.parseAndResponse()) {
+                    if (socks.getHost().equals("") || socks.getPort() == 0) {
                         try {
                             local.close();
                         } catch (IOException ex) {
@@ -57,16 +59,24 @@ public class RemoteService implements Service {
                     
                     try {
                         Socket target = new Socket(socks.getHost(), socks.getPort());
-                        ReadHandler r = new ReadHandler(local, target, config);
-                        r.process();
-                        WriteHandler w = new WriteHandler(local, target, config);
-                        w.process();
+                        
+                        IoProcess rd = new IoProcess(local, target, config);
+                        rd.setEncryptHandler((ByteBuffer buffer, int size) -> {
+                            Pack.unpack(buffer, size);
+                        });
+                        
+                        IoProcess wr = new IoProcess(local, target, config);
+                        wr.setEncryptHandler((ByteBuffer buffer, int size) -> {
+                            Pack.pack(buffer, size);
+                        });
+                        
+                        rd.registReadEventLoop(config.getConfig(Config.RemoteRBsize, "1024"));
+                        wr.registWriteEventLoop(config.getConfig(Config.RemoteWBsize, "1024"));
                     } catch (IOException ex) {
                         try {
                             local.close();
                         } catch (IOException e) {
                         }
-                        return;
                     }
                 } else {
                     try {
