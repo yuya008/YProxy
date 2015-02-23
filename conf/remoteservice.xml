@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <remoteservice>
-	<!-- 远程服务主机名 -->
+    <!-- 远程服务主机名 -->
     <hostname>127.0.0.1</hostname>
     <!-- 远程服务端口号 -->
     <port>5500</port>

@@ -14,7 +14,7 @@ import javax.xml.stream.XMLStreamReader;
 
 public class Config extends ConfigConstant {
     
-    private String[] args;
+    private final String[] args;
     private final Properties config;
     private String whatService;
     
@@ -58,15 +58,16 @@ public class Config extends ConfigConstant {
     }
     
     private void advanceParse() {
+        String baseDir = System.getProperty(Config.BaseDir);
+        if (baseDir == null)
+            panic("Property "+Config.BaseDir+" is null");
+        
         String userDirStr = System.getProperty("user.dir");
-        
-        if (userDirStr == null)
-            panic("Property user.dir is null");
-        
         config.setProperty(Config.UserDir, userDirStr);
-        String baseDir = Paths.get(userDirStr+"/../").normalize().toAbsolutePath().toString();
+        
         config.setProperty(Config.BaseDir, baseDir);
-        String confDir = Paths.get(userDirStr+"/../conf").normalize().toAbsolutePath().toString();
+        
+        String confDir = Paths.get(baseDir+"/conf").normalize().toAbsolutePath().toString();
         config.setProperty(Config.ConfDir, confDir);
     }
     
@@ -158,9 +159,9 @@ public class Config extends ConfigConstant {
     }
     
     // test
-    public Properties getConfig() {
-        return config;
-    }
+//    public Properties getConfig() {
+//        return config;
+//    }
     
     public String whatService() {
         return whatService;
