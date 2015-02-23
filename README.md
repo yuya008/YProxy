@@ -18,7 +18,7 @@
 * 配置conf中xml的配置文件
 * 然后在bin目录中使用启动脚本启动服务
 
-```sh
+```bash
 #bin/YProxy localservice 	#本地服务启动
 #bin/YProxy remoteservice 	#远程服务启动
 #bin/YProxy --help			#帮助信息
