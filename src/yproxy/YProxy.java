@@ -15,8 +15,6 @@ public class YProxy {
     }
     
     public static void main(String[] args) {
-        
-        System.setProperty("user.dir", "/home/yuya/NetBeansProjects/YProxy/bin");
         Config config = new Config(args);
         Service service = YProxy.createService(config);
         service.start();

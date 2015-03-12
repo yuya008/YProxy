@@ -2,9 +2,9 @@
 
 <remoteservice>
     <!-- 远程服务主机名 -->
-    <hostname>127.0.0.1</hostname>
+    <hostname>192.228.105.18</hostname>
     <!-- 远程服务端口号 -->
-    <port>5500</port>
+    <port>12300</port>
     <!-- 读缓冲区大小 -->
     <read-buffer-size>1024</read-buffer-size>
     <!-- 写缓冲区大小 -->
